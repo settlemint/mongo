@@ -21,5 +21,5 @@ services:
       - 'mongo'
     links:
       - mongo:mongo
-    entrypoint: ['replicaset.sh']
+    entrypoint: ['./replicaset.sh']
 ```
