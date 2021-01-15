@@ -5,7 +5,6 @@ on:
     branches: [ master, beta, alpha ]
 
 env:
-  NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
   PAT_TOKEN: ${{ secrets.PAT_TOKEN }}
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -23,7 +22,7 @@ jobs:
         run: |
           sudo snap install yq
           echo "::set-output name=branch::$(cat $GITHUB_EVENT_PATH | jq -er ".pull_request.head.ref // \"${GITHUB_REF##*/}\"")"
-          echo "::set-output name=version::$(yq e ".version" ./version.yaml )"
+          echo "::set-output name=version::$(yq e ".version" ./version.yml )"
 
       - name: Inject slug/short variables
         uses: rlespinasse/github-slug-action@v3.x
@@ -39,13 +38,6 @@ jobs:
         with:
           username: ${{ secrets.DOCKERHUB_USER }}
           password: ${{ secrets.DOCKERHUB_PASS }}
-
-      - name: Login to GitHub Container Registry
-        uses: docker/login-action@v1
-        with:
-          registry: ghcr.io
-          username: ${{ github.repository_owner }}
-          password: ${{ secrets.PAT_TOKEN }}
 
       - name: Print slug/short variables
         run: |
@@ -74,10 +66,8 @@ jobs:
           file: ./Dockerfile
           pull: true
           push: true
-          cache-from: type=registry,ref=ghcr.io/settlemint/mongo:latest
+          cache-from: type=registry,ref=settlemint/mongo:latest
           cache-to: type=inline
           tags: |
-            ghcr.io/settlemint/mongo:latest
-            ghcr.io/settlemint/mongo:${{steps.buildargs.outputs.version}}
             settlemint/mongo:latest
             settlemint/mongo:${{steps.buildargs.outputs.version}}
