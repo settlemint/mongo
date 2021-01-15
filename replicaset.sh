@@ -19,7 +19,7 @@ mongo --host ${mongodb1}:${port} <<EOF
         "members": [
             {
                 "_id": 0,
-                "host": "${mongodb1}:${port}"
+                "host": "localhost:${port}"
             }
         ]
     };
