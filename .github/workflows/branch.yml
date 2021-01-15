@@ -1,0 +1,83 @@
+name: Branch
+
+on:
+  push:
+    branches: [ master, beta, alpha ]
+
+env:
+  NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+  PAT_TOKEN: ${{ secrets.PAT_TOKEN }}
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: "0"
+
+      - name: Get the build args
+        id: buildargs
+        run: |
+          sudo snap install yq
+          echo "::set-output name=branch::$(cat $GITHUB_EVENT_PATH | jq -er ".pull_request.head.ref // \"${GITHUB_REF##*/}\"")"
+          echo "::set-output name=version::$(yq e ".version" ./version.yaml )"
+
+      - name: Inject slug/short variables
+        uses: rlespinasse/github-slug-action@v3.x
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v1
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+
+      - name: Login to DockerHub
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKERHUB_USER }}
+          password: ${{ secrets.DOCKERHUB_PASS }}
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v1
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.PAT_TOKEN }}
+
+      - name: Print slug/short variables
+        run: |
+          echo "Slug variables"
+          echo "   ref        : ${{ env.GITHUB_REF_SLUG }}"
+          echo "   head ref   : ${{ env.GITHUB_HEAD_REF_SLUG }}"
+          echo "   base ref   : ${{ env.GITHUB_BASE_REF_SLUG }}"
+          echo "   event ref  : ${{ env.GITHUB_EVENT_REF_SLUG }}"
+          echo "   repository : ${{ env.GITHUB_REPOSITORY_SLUG }}"
+          echo "Slug URL variables"
+          echo "   ref        : ${{ env.GITHUB_REF_SLUG_URL }}"
+          echo "   head ref   : ${{ env.GITHUB_HEAD_REF_SLUG_URL }}"
+          echo "   base ref   : ${{ env.GITHUB_BASE_REF_SLUG_URL }}"
+          echo "   event ref  : ${{ env.GITHUB_EVENT_REF_SLUG_URL }}"
+          echo "   repository : ${{ env.GITHUB_REPOSITORY_SLUG_URL }}"
+          echo "Short SHA variables"
+          echo "   sha        : ${{ env.GITHUB_SHA_SHORT }}"
+
+
+      - name: Build and push
+        if: github.ref == 'refs/heads/master'
+        uses: docker/build-push-action@v2
+        with:
+          platforms: linux/amd64,linux/arm64
+          context: .
+          file: ./Dockerfile
+          pull: true
+          push: true
+          cache-from: type=registry,ref=ghcr.io/settlemint/mongo:latest
+          cache-to: type=inline
+          tags: |
+            ghcr.io/settlemint/mongo:latest
+            ghcr.io/settlemint/mongo:${{steps.buildargs.outputs.version}}
+            settlemint/mongo:latest
+            settlemint/mongo:${{steps.buildargs.outputs.version}}
