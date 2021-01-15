@@ -12,8 +12,9 @@ services:
     container_name: 'mongo'
     image: 'settlemint/mongo:latest'
     command: mongod --replSet replicaset
-    environment:
-      MONGODB_ADVERTISED_HOSTNAME: localhost
+    hostname: mongo
+    ports:
+      - '27017:27017'
 
   mongo-replicaset-setup:
     container_name: 'mongo-replicaset-setup'
@@ -23,6 +24,4 @@ services:
     links:
       - mongo:mongo
     entrypoint: [ './replicaset.sh' ]
-    environment:
-      MONGODB_ADVERTISED_HOSTNAME: localhost
 ```
