@@ -23,7 +23,7 @@ get_mongo_hostname() {
 }
 
 mongodb1=`getent hosts ${MONGO1:-"mongo"} | awk '{ print $1 }'`
-externalMongo=`get_mongo_hostname()`
+externalMongo=`${MONGODB_ADVERTISED_HOSTNAME:-mongodb1}`
 port=${PORT:-27017}
 
 echo "Waiting for mongo (at host $mongodb1) to start up.."
