@@ -1,3 +1,3 @@
-FROM mongo:4.4.8-bionic
+FROM mongo:6.0.3
 
 COPY replicaset.sh replicaset.sh
