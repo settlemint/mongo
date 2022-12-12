@@ -1,6 +1,6 @@
 # settlemint/mongo
 
-A MongoDB 4 image with a replicaset setup script added to enable change streams.
+A MongoDB 6 image with a replicaset setup script added to enable change streams.
 
 ## Usage
 
